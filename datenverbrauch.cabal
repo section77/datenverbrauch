@@ -1,0 +1,26 @@
+name:                datenverbrauch
+version:             0.1.0.0
+synopsis:            Simple project template from stack
+description:         Please see README.md
+homepage:            http://github.com/section77/datenverbrauch#readme
+license:             MIT
+license-file:        LICENSE
+author:              j-keck
+maintainer:          jhyphenkeck@gmail.com
+category:            Web
+build-type:          Simple
+cabal-version:       >=1.10
+
+executable datenverbrauch
+  hs-source-dirs:      src
+  main-is:             Main.hs
+  default-language:    Haskell2010
+  build-depends:       base >= 4.7 && < 5
+                     , bytestring
+                     , lens
+                     , optparse-applicative
+                     , text
+                     , transformers
+                     , wreq
+                     , xml
+
