@@ -4,8 +4,8 @@ let
 
   inherit (nixpkgs) pkgs;
 
-  f = { mkDerivation, base, bytestring, lens, optparse-applicative
-      , stdenv, text, transformers, wreq, xml
+  f = { mkDerivation, base, bytestring, HStringTemplate, lens
+      , optparse-applicative, stdenv, text, time, transformers, wreq, xml
       }:
       mkDerivation {
         pname = "datenverbrauch";
@@ -14,8 +14,8 @@ let
         isLibrary = false;
         isExecutable = true;
         executableHaskellDepends = [
-          base bytestring lens optparse-applicative text transformers wreq
-          xml
+          base bytestring HStringTemplate lens optparse-applicative text time
+          transformers wreq xml
         ];
         homepage = "http://github.com/section77/datenverbrauch#readme";
         description = "Simple project template from stack";
