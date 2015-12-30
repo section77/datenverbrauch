@@ -20,7 +20,9 @@ executable datenverbrauch
                      , lens
                      , optparse-applicative
                      , text
+                     , time
                      , transformers
                      , wreq
                      , xml
+                     , HStringTemplate
 

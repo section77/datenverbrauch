@@ -1,11 +1,12 @@
 module Args where
 
+import           Data.Maybe          (catMaybes)
 import           Options.Applicative
 import           Types
 
 appArgs :: Parser AppArgs
 appArgs = flag' ShowVersion (short 'v' <> long "version" <> help "app version")
-          <|> Run <$> AppConfig <$> providerLogin
+          <|> Run <$> (AppConfig <$> providerLogin <*> endpoints)
 
 
 providerLogin :: Parser ProviderLogin
@@ -21,3 +22,21 @@ providerLogin = ProviderLogin
                         <> metavar "<PASS>"
                         <> help "provider login password")
 
+
+endpoints :: Parser Endpoints
+endpoints = fmap catMaybes $ pack <$> quota <*> used <*> available
+    where pack a b c = [a, b, c] -- FIXME: generic pack
+          quota = optional $ EndpointQuota <$> strOption
+                  ( long "pub-quota"
+                      <> metavar "<PUBLISH URL FOR QUOTA>"
+                      <> help "endpoint for quota value")
+
+          used = optional $ EndpointUsed <$> strOption
+               ( long "pub-used"
+                 <> metavar "<PUBLISH URL FOR USED>"
+                 <> help "endpoint for used value")
+
+          available = optional $ EndpointAvailable <$> strOption
+                    ( long "pub-available"
+                      <> metavar "<PUBLISH URL FOR AVAILABLE>"
+                      <> help "endpoint for available value")
