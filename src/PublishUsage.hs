@@ -6,6 +6,7 @@ import           Control.Lens
 import           Control.Monad.Trans.Class  (lift)
 import           Control.Monad.Trans.Except
 import           Control.Monad.Trans.Reader (asks)
+import qualified Data.ByteString.Lazy       as BL
 import           Data.Time.Clock.POSIX
 import qualified Network.Wreq               as W
 import           Text.StringTemplate
@@ -26,7 +27,7 @@ publish :: String -> Usage -> Endpoint -> IO ()
 publish ts u e = do
   let url = enrich ts u e
   _ <- putStr $ "Publish to: " ++ url
-  errOrRes <- try $ W.get url
+  errOrRes <- try $ W.post url BL.empty
   case errOrRes of
     Left (e :: SomeException) -> putStrLn $ " - ERROR: " ++ show e
     Right res -> putStrLn " - OK"
