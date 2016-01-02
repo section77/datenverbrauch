@@ -28,7 +28,8 @@ run :: AppArgs -> IO ()
 run ShowVersion = putStrLn ("version: " ++ showVersion version)
 run (Run ac) = printHeader >> runExceptT (runReaderT (queryUsage >>= publishUsage) ac) >>= printResult
   where printHeader = do
-          t <- getCurrentTime
+          tz <- getCurrentTimeZone
+          t <- utcToLocalTime tz <$> getCurrentTime
           printf "Startup - date: %s\n" $ formatTime defaultTimeLocale "%d.%m.%0Y %R" t
 
 
