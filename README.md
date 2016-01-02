@@ -53,11 +53,11 @@ currently the following holes are replaced in the '--pub-xxx' url:
   * query data usage and publish the quota and used values
 
         ./datenverbrauch --user 0157..... --pass <PWD> \
-          --pub-quota 'http://example.com?ts=$ts$&type=quota&value=$value$' \
-          --pub-used 'http://example.com?ts=$ts$&type=used&value=$value$'
+          --pub-quota 'http://httpbin.org/post?ts=$ts$&type=quota&value=$value$' \
+          --pub-used 'http://httpbin.org/post?ts=$ts$&type=used&value=$value$'
         Startup - date: 30.12.2015 18:19
-        Publish to: http://example.com?ts=1451495814368&type=quota&value=5120 - OK
-        Publish to: http://example.com?ts=1451495814368&type=used&value=1166 - OK
+        Publish to: http://httpbin.org/post?ts=1451495814368&type=quota&value=5120 - OK
+        Publish to: http://httpbin.org/post?ts=1451495814368&type=used&value=1166 - OK
         ------------------
         Quota:     5120 MB
         Used:      1166 MB
@@ -67,11 +67,20 @@ currently the following holes are replaced in the '--pub-xxx' url:
   * query data usage und publish the available value
 
         datenverbrauch --user 0157..... --pass <PWD> \
-          --pub-available 'http://example.com/available&value=$value$'
+          --pub-available 'http://httpbin.org/post?name=av&value=$value$'
         Startup - date: 30.12.2015 18:20
-        Publish to: http://example.com/available&value=3954 - ERROR: StatusCodeException ... 404 ...
+        Publish to: http://httpbin.org/post&name=av&value=3954 - Ok
         ------------------
         Quota:     5120 MB
         Used:      1166 MB
         Available: 3954 MB
           
+
+
+## build / install
+
+ * install [stack](https://www.stackage.org/) from [here](https://github.com/commercialhaskell/stack/blob/master/doc/install_and_upgrade.md)
+ * stack install
+
+this installs the application under '$HOME/.local/bin'
+
