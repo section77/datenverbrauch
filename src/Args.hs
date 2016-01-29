@@ -6,7 +6,7 @@ import           Types
 
 appArgs :: Parser AppArgs
 appArgs = flag' ShowVersion (short 'v' <> long "version" <> help "app version")
-          <|> Run <$> (AppConfig <$> providerLogin <*> endpoints)
+          <|> Run <$> (AppConfig <$> providerLogin <*> endpoints <*> usageThreshold)
 
 
 providerLogin :: Parser ProviderLogin
@@ -40,3 +40,17 @@ endpoints = fmap catMaybes $ pack <$> quota <*> used <*> available
                     ( long "pub-available"
                       <> metavar "<PUBLISH URL FOR AVAILABLE>"
                       <> help "endpoint for available value")
+
+
+
+usageThreshold :: Parser UsageThreshold
+usageThreshold = (UsageThreshold
+            <$> option auto
+                ( long "usage-notification"
+                <> help "usage notification threshold")
+            <*> option auto
+                ( long "usage-warning"
+                <> help "usage warning threshold")
+             ) <|> pure WithoutUsageThreshold
+
+

@@ -9,7 +9,8 @@ type App a = ReaderT AppConfig (ExceptT AppError IO) a
 
 data AppError = LoginError String
               | BodyNotParsable
-              | UsageNotFound
+              | BalanceNotFound
+              | BalanceNotExtractable
               | UsageNotExtractable
               | PublisherError String
               deriving Show
@@ -23,6 +24,7 @@ data AppArgs = ShowVersion
 data AppConfig = AppConfig {
       acProviderLogin    :: ProviderLogin
     , acPublishEndpoints :: Endpoints
+    , acUsageThreshold   :: UsageThreshold
     } deriving Show
 
 
@@ -39,8 +41,23 @@ data Endpoint = EndpointQuota String
                 deriving Show
 
 
-data Usage = Usage {
-      uQuota     :: Int
-    , uUsed      :: Int
-    , uAvailable :: Int
+
+data UsageThreshold = WithoutUsageThreshold
+                    | UsageThreshold {
+                        utNotification :: Int
+                      , utWarning      :: Int
+                      } deriving Show
+
+
+data Tariff = Tariff {
+      tBalance :: Float
+    , tUsage   :: Usage
     } deriving Show
+
+
+data Usage = UsageNotAvailable
+           | Usage {
+               uQuota     :: Int
+             , uUsed      :: Int
+             , uAvailable :: Int
+             } deriving Show

@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns      #-}
-module QueryUsage where
+module QueryTariff where
 
 import           Control.Lens
 import           Control.Monad.Trans.Class  (lift)
@@ -15,23 +15,42 @@ import           Text.XML.Light
 import           Types
 
 
-queryUsage :: App Usage
-queryUsage = withSession $ \sess -> do
+
+queryTariff :: App Tariff
+queryTariff = withSession $ \sess -> do
                res <- lift $ WS.get sess "https://prepaidkundenbetreuung.eplus.de/content/prepaid/cfi56baf7pgl63d4/de/tarif/mein_tarif.htx"
                let body = res ^. responseBody
-               either throwE return $ parse body
+               either throwE pure $ parseDocument body >>= extract
+    where extract :: Document -> Either AppError Tariff
+          extract doc = do
+            balance <- extractBalance doc
+            usage <- extractUsage doc
+            pure $ Tariff balance usage
 
 
-parse :: BL.ByteString -> Either AppError Usage
-parse bs = parse bs >>= findUsage >>= extractUsage
-    where parse :: BL.ByteString -> Either AppError Element
-          parse bs = maybe (Left BodyNotParsable) Right $ parseXMLDoc bs
-          findUsage :: Element -> Either AppError Element
-          findUsage xml = maybe (Left UsageNotFound) Right $ filterElement (hasAttrVal "class" "usage") xml
-          extractUsage :: Element -> Either AppError Usage
+
+type Document = Element
+
+
+parseDocument :: BL.ByteString -> Either AppError Document
+parseDocument bs = maybe (Left BodyNotParsable) Right $ parseXMLDoc bs
+
+
+extractBalance :: Document -> Either AppError Float
+extractBalance doc = maybe (Left BalanceNotFound) extract $ filterElement (hasAttrVal "class" "amount") doc
+          -- <p class="amount">x,xx €</p>
+    where extract (words . strContent -> [b, _]) = Right $ read' b
+          extract _ = Left BalanceNotExtractable
+          read' = read . map (\c -> if(c == ',') then '.' else c)
+
+
+extractUsage :: Document -> Either AppError Usage
+extractUsage doc = maybe (Right UsageNotAvailable) extract $ filterElement (hasAttrVal "class" "usage") doc
           -- <div ...>3975 von 5120 MB</div> -> Usage
-          extractUsage (words . strContent -> [a, _, q, _]) = Right $ Usage (read q) (read q - read a) (read a)
-          extractUsage _ = Left UsageNotExtractable
+    where extract :: Element -> Either AppError Usage
+          extract (words . strContent -> [a, _, q, _]) = Right $ Usage (read q) (read q - read a) (read a)
+          extract _ = Left UsageNotExtractable
+
 
 
 hasAttrVal :: String -> String -> Element -> Bool

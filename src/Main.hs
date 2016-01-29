@@ -8,8 +8,9 @@ import           Data.Time
 import           Data.Version               (showVersion)
 import           Options.Applicative
 import           Paths_datenverbrauch       (version)
-import           PublishUsage
-import           QueryUsage
+import           PublishTariff
+import           QueryTariff
+import           System.Exit                (ExitCode (..), exitWith)
 import           Text.Printf
 import           Types
 
@@ -26,7 +27,7 @@ main = execParser opts >>= run
 
 run :: AppArgs -> IO ()
 run ShowVersion = putStrLn ("version: " ++ showVersion version)
-run (Run ac) = printHeader >> runExceptT (runReaderT (queryUsage >>= publishUsage) ac) >>= printResult
+run (Run ac) = printHeader >> runExceptT (runReaderT (queryTariff >>= publishTariff) ac) >>= evalRun (acUsageThreshold ac)
   where printHeader = do
           tz <- getCurrentTimeZone
           t <- utcToLocalTime tz <$> getCurrentTime
@@ -34,11 +35,29 @@ run (Run ac) = printHeader >> runExceptT (runReaderT (queryUsage >>= publishUsag
 
 
 
-printResult :: Either AppError Usage -> IO ()
-printResult (Right usage) = do
-  printf("------------------\n")
-  printf "Quota:     %d MB\n" $ uQuota usage
-  printf "Used:      %d MB\n" $ uUsed usage
-  printf "Available: %d MB\n" $ uAvailable usage
-printResult (Left e) = putStrLn $ "ERROR: " ++ show e
+evalRun :: UsageThreshold -> Either AppError Tariff -> IO ()
+evalRun ut l@(Left e) = putStrLn ("ERROR: " ++ show e) >> exit ut l
+evalRun ut r@(Right tariff) = printTariff tariff >> exit ut r
 
+
+
+exit :: UsageThreshold -> Either AppError Tariff -> IO ()
+exit _ (Left e) = exitWith $ ExitFailure 2
+exit _ (Right (Tariff _ UsageNotAvailable)) = exitWith $ ExitFailure 2
+exit WithoutUsageThreshold _ = exitWith ExitSuccess
+exit (UsageThreshold n w) (Right (Tariff _ (Usage _ _ a))) = if a < w then exitWith $ ExitFailure 2
+                                                             else if a < n then exitWith $ ExitFailure 1
+                                                             else exitWith ExitSuccess
+
+
+printTariff :: Tariff -> IO ()
+printTariff (Tariff balance usage) = do
+  printf("------------------\n")
+  printBalance balance
+  printUsage usage
+    where printBalance = printf "Balance:   %f €\n"
+          printUsage UsageNotAvailable = putStrLn "Usage not available - quota exhausted?"
+          printUsage (Usage q u a) = do
+            printf "Quota:     %d MB\n" q
+            printf "Used:      %d MB\n" u
+            printf "Available: %d MB\n" a

@@ -1,5 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-module PublishUsage where
+module PublishTariff where
 
 import           Control.Exception
 import           Control.Lens
@@ -13,13 +13,13 @@ import           Text.StringTemplate
 import           Types
 
 
-publishUsage :: Usage -> App Usage
-publishUsage usage = do
+publishTariff :: Tariff -> App Tariff
+publishTariff tariff@(Tariff balance usage) = do
   endpoints <- asks acPublishEndpoints
   _ <- lift . lift $ do
          ts <- show . round . (* 1000) <$> getPOSIXTime
          mapM_ (publish ts usage) endpoints
-  return usage
+  return tariff
 
 
 -- FIXME: better error handling
