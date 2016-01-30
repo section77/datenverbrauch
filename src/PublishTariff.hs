@@ -14,6 +14,7 @@ import           Types
 
 
 publishTariff :: Tariff -> App Tariff
+publishTariff t@(Tariff _ UsageNotAvailable) = return t
 publishTariff tariff@(Tariff balance usage) = do
   endpoints <- asks acPublishEndpoints
   _ <- lift . lift $ do
