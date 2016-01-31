@@ -6,7 +6,7 @@ import           Types
 
 appArgs :: Parser AppArgs
 appArgs = flag' ShowVersion (short 'v' <> long "version" <> help "app version")
-          <|> Run <$> (AppConfig <$> providerLogin <*> endpoints <*> usageThreshold)
+          <|> Run <$> (AppConfig <$> providerLogin <*> endpoints <*> usageThreshold <*> balanceThreshold)
 
 
 providerLogin :: Parser ProviderLogin
@@ -24,8 +24,8 @@ providerLogin = ProviderLogin
 
 
 endpoints :: Parser Endpoints
-endpoints = fmap catMaybes $ pack <$> quota <*> used <*> available
-    where pack a b c = [a, b, c] -- FIXME: generic pack
+endpoints = fmap catMaybes $ pack <$> quota <*> used <*> available <*> balance
+    where pack a b c d = [a, b, c, d] -- FIXME: generic pack
           quota = optional $ EndpointQuota <$> strOption
                   ( long "pub-quota"
                       <> metavar "<PUBLISH URL FOR QUOTA>"
@@ -41,16 +41,29 @@ endpoints = fmap catMaybes $ pack <$> quota <*> used <*> available
                       <> metavar "<PUBLISH URL FOR AVAILABLE>"
                       <> help "endpoint for available value")
 
+          balance = optional $ EndpointBalance <$> strOption
+                    ( long "pub-balance"
+                    <> metavar "<PUBLISH URL FOR BALANCE>"
+                    <> help "endpoint for current balance")
+
 
 
 usageThreshold :: Parser UsageThreshold
-usageThreshold = (UsageThreshold
-            <$> option auto
-                ( long "usage-notification"
-                <> help "usage notification threshold")
-            <*> option auto
-                ( long "usage-warning"
-                <> help "usage warning threshold")
-             ) <|> pure WithoutUsageThreshold
+usageThreshold = UsageThreshold
+            <$> (optional $ option auto
+                              ( long "usage-notification"
+                              <> help "usage notification threshold"))
+            <*> (optional $ option auto
+                              ( long "usage-warning"
+                              <> help "usage warning threshold"))
 
 
+
+balanceThreshold :: Parser BalanceThreshold
+balanceThreshold = BalanceThreshold
+                   <$> (optional $ option auto
+                                     ( long "balance-notification"
+                                     <> help "balance notification threshold"))
+                   <*> (optional $ option auto
+                                     ( long "balance-warning"
+                                      <> help "balance warning threshold"))

@@ -15,18 +15,18 @@ import           Types
 
 publishTariff :: Tariff -> App Tariff
 publishTariff t@(Tariff _ UsageNotAvailable) = return t
-publishTariff tariff@(Tariff balance usage) = do
+publishTariff t@(Tariff balance usage) = do
   endpoints <- asks acPublishEndpoints
   _ <- lift . lift $ do
          ts <- show . round . (* 1000) <$> getPOSIXTime
-         mapM_ (publish ts usage) endpoints
-  return tariff
+         mapM_ (publish ts t) endpoints
+  return t
 
 
 -- FIXME: better error handling
-publish :: String -> Usage -> Endpoint -> IO ()
-publish ts u e = do
-  let url = enrich ts u e
+publish :: String -> Tariff -> Endpoint -> IO ()
+publish ts t e = do
+  let url = enrich ts t e
   _ <- putStr $ "Publish to: " ++ url
   errOrRes <- try $ W.post url BL.empty
   case errOrRes of
@@ -36,9 +36,10 @@ publish ts u e = do
 
 
 
-enrich :: String -> Usage -> Endpoint -> String
-enrich ts u e = let (url, value) = lookup e u
+enrich :: String -> Tariff -> Endpoint -> String
+enrich ts t e = let (url, value) = lookup e t
                 in render $ setManyAttrib [("ts", ts), ("value", show value)] $ newSTMP url
-    where lookup (EndpointQuota url) u = (url, uQuota u)
-          lookup (EndpointUsed url)  u = (url, uUsed u)
-          lookup (EndpointAvailable url) u = (url, uAvailable u)
+    where lookup (EndpointQuota url) t = (url, uQuota . tUsage $ t)
+          lookup (EndpointUsed url)  t = (url, uUsed . tUsage $ t)
+          lookup (EndpointAvailable url) t = (url, uAvailable . tUsage $ t)
+          lookup (EndpointBalance url) t = (url, round . tBalance $ t)

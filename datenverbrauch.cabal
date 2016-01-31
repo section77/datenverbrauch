@@ -15,6 +15,7 @@ executable datenverbrauch
   hs-source-dirs:      src
   main-is:             Main.hs
   default-language:    Haskell2010
+  ghc-options:         -fwarn-incomplete-patterns
   build-depends:       base >= 4.7 && < 5
                      , bytestring
                      , lens
@@ -25,4 +26,13 @@ executable datenverbrauch
                      , wreq
                      , xml
                      , HStringTemplate
+
+test-suite doctest
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             doctest.hs
+  build-depends:       base
+                     , doctest
+  default-language:    Haskell2010
+                     
 

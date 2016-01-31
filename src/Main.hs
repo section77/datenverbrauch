@@ -2,6 +2,8 @@
 module Main where
 
 import           Args
+import           Control.Monad              (when)
+import           Control.Monad.Trans.Class  (lift)
 import           Control.Monad.Trans.Except
 import           Control.Monad.Trans.Reader
 import           Data.Time
@@ -27,37 +29,77 @@ main = execParser opts >>= run
 
 run :: AppArgs -> IO ()
 run ShowVersion = putStrLn ("version: " ++ showVersion version)
-run (Run ac) = printHeader >> runExceptT (runReaderT (queryTariff >>= publishTariff) ac) >>= evalRun (acUsageThreshold ac)
-  where printHeader = do
-          tz <- getCurrentTimeZone
-          t <- utcToLocalTime tz <$> getCurrentTime
-          printf "Startup - date: %s\n" $ formatTime defaultTimeLocale "%d.%m.%0Y %R" t
+run (Run ac) = do
+  printHeader
+  res <- runExceptT $ runReaderT (queryTariff >>= publishTariff) ac
+  runReaderT (evalRes res) ac
+    where printHeader = do
+            tz <- getCurrentTimeZone
+            t <- utcToLocalTime tz <$> getCurrentTime
+            printf "Startup - date: %s\n" $ formatTime defaultTimeLocale "%d.%m.%0Y %R" t
 
 
 
-evalRun :: UsageThreshold -> Either AppError Tariff -> IO ()
-evalRun ut l@(Left e) = putStrLn ("ERROR: " ++ show e) >> exit ut l
-evalRun ut r@(Right tariff) = printTariff tariff >> exit ut r
+
+-- | eval the run result
+--
+-- >>> -- all fine
+-- >>> let t = Tariff 10 $ Usage 500 230 270
+-- >>> let ut = UsageThreshold Nothing Nothing
+-- >>> let bt = BalanceThreshold Nothing Nothing
+-- >>> runReaderT (evalRes (Right t)) $ AppConfig (ProviderLogin "" "") [] ut bt
+-- ------------------
+-- Balance:   10.0 €
+-- ------------------
+-- Quota:     500 MB
+-- Used:      230 MB
+-- Available: 270 MB
+--
+--
+-- >>> -- usage notification threshold
+-- >>> let t = Tariff 10 $ Usage 500 230 270
+-- >>> let ut = UsageThreshold (Just 260) Nothing
+-- >>> let bt = BalanceThreshold Nothing Nothing
+-- >>> runReaderT (evalRes (Right t)) $ AppConfig (ProviderLogin "" "") [] ut bt
+-- ------------------
+-- Balance:   10.0 €
+-- ------------------
+-- Quota:     500 MB
+-- Used:      230 MB
+-- Available: 270 MB
+-- usage below notification threshold!
+-- *** Exception: ExitFailure 1
+evalRes :: Either AppError Tariff -> ReaderT AppConfig IO ()
+-- handle successful result
+evalRes (Right (Tariff b u)) = do
+  usageBelowWarning <- isBelowWarning u
+  usageBelowNotification <- isBelowNotification u
+  balanceBelowWarning <- isBelowWarning b
+  balanceBelowNotification <- isBelowNotification b
+  lift $ do
+    printf("------------------\n")
+    printf "Balance:   %f €\n" b
+    printf("------------------\n")
+    if isUsageAvailable u then do
+            printf "Quota:     %d MB\n" $ uQuota u
+            printf "Used:      %d MB\n" $ uUsed u
+            printf "Available: %d MB\n" $ uAvailable u
+    else do
+           putStrLn "Usage not available - quota exhausted?"
+           exitWith (ExitFailure 2)
+    when usageBelowWarning $ putStrLn "usage below warning threshold!" >> exitWith (ExitFailure 2)
+    when usageBelowNotification $ putStrLn "usage below notification threshold!" >> exitWith (ExitFailure 1)
+    when balanceBelowWarning $ putStrLn "balance below warning threshold!" >> exitWith (ExitFailure 2)
+    when balanceBelowNotification $ putStrLn "balance below notification threshold!" >> exitWith (ExitFailure 1)
+-- handle errors
+evalRes (Left e) = lift $ do
+                  putStrLn $ "ERROR: " ++ show e
+                  exitWith $ ExitFailure 2
 
 
 
-exit :: UsageThreshold -> Either AppError Tariff -> IO ()
-exit _ (Left e) = exitWith $ ExitFailure 2
-exit _ (Right (Tariff _ UsageNotAvailable)) = exitWith $ ExitFailure 2
-exit WithoutUsageThreshold _ = exitWith ExitSuccess
-exit (UsageThreshold n w) (Right (Tariff _ (Usage _ _ a))) = if a < w then exitWith $ ExitFailure 2
-                                                             else if a < n then exitWith $ ExitFailure 1
-                                                             else exitWith ExitSuccess
 
 
-printTariff :: Tariff -> IO ()
-printTariff (Tariff balance usage) = do
-  printf("------------------\n")
-  printBalance balance
-  printUsage usage
-    where printBalance = printf "Balance:   %f €\n"
-          printUsage UsageNotAvailable = putStrLn "Usage not available - quota exhausted?"
-          printUsage (Usage q u a) = do
-            printf "Quota:     %d MB\n" q
-            printf "Used:      %d MB\n" u
-            printf "Available: %d MB\n" a
+isUsageAvailable :: Usage -> Bool
+isUsageAvailable UsageNotAvailable = False
+isUsageAvailable _ = True
