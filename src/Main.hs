@@ -31,7 +31,7 @@ run :: AppArgs -> IO ()
 run ShowVersion = putStrLn ("version: " ++ showVersion version)
 run (Run ac) = do
   printHeader
-  res <- runExceptT $ runReaderT (queryTariff >>= publishTariff) ac
+  res <- runExceptT $ runReaderT queryTariff ac
   runReaderT (evalRes res) ac
     where printHeader = do
             tz <- getCurrentTimeZone
@@ -71,21 +71,26 @@ run (Run ac) = do
 -- *** Exception: ExitFailure 1
 evalRes :: Either AppError Tariff -> ReaderT AppConfig IO ()
 -- handle successful result
-evalRes (Right (Tariff b u)) = do
+evalRes (Right t@(Tariff b u)) = do
+  endpoints <- asks acPublishEndpoints
   usageBelowWarning <- isBelowWarning u
   usageBelowNotification <- isBelowNotification u
   balanceBelowWarning <- isBelowWarning b
   balanceBelowNotification <- isBelowNotification b
   lift $ do
-    printf("------------------\n")
+    printf "------------------\n"
     printf "Balance:   %f €\n" b
-    printf("------------------\n")
+    printf "------------------\n"
     if isUsageAvailable u then do
             printf "Quota:     %d MB\n" $ uQuota u
             printf "Used:      %d MB\n" $ uUsed u
             printf "Available: %d MB\n" $ uAvailable u
+            printf "------------------\n"
+            publishTariff endpoints t
     else do
-           putStrLn "Usage not available - quota exhausted?"
+           putStrLn "Usage not available - quota exhausted? (publish zeros)"
+           putStrLn "------------------"
+           publishTariff endpoints $ t { tUsage = Usage 0 0 0 }
            exitWith (ExitFailure 2)
     when usageBelowWarning $ putStrLn "usage below warning threshold!" >> exitWith (ExitFailure 2)
     when usageBelowNotification $ putStrLn "usage below notification threshold!" >> exitWith (ExitFailure 1)

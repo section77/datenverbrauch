@@ -4,7 +4,7 @@ module QueryTariff where
 
 import           Control.Lens
 import           Control.Monad.Trans.Class  (lift)
-import           Control.Monad.Trans.Except (ExceptT (..), runExceptT, throwE)
+import           Control.Monad.Trans.Except (ExceptT (..), throwE)
 import           Control.Monad.Trans.Reader (asks)
 import qualified Data.ByteString.Lazy.Char8 as BL
 import           Data.List                  (isInfixOf)
