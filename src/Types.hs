@@ -83,13 +83,13 @@ instance IsBelowThreshold Usage where
     isBelowNotification UsageNotAvailable = pure False
     isBelowNotification (Usage _ _ a) = do
                                   n <- utNotification <$> asks acUsageThreshold
-                                  pure $ maybe False (< a) n
+                                  pure $ maybe False (> a) n
 
 
     isBelowWarning UsageNotAvailable = pure False
     isBelowWarning (Usage _ _ a) = do
                                   w <- utWarning <$> asks acUsageThreshold
-                                  pure $ maybe False (< a) w
+                                  pure $ maybe False (> a) w
 
 
 
@@ -97,9 +97,9 @@ instance IsBelowThreshold Balance where
 
     isBelowNotification b = do
       n <- btNotification <$> asks acBalanceThreshold
-      pure $ maybe False (< b) n
+      pure $ maybe False (> b) n
 
 
     isBelowWarning b = do
       w <- btWarning <$> asks acBalanceThreshold
-      pure $ maybe False (< b) w
+      pure $ maybe False (> b) w
