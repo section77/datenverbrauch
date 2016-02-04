@@ -45,9 +45,9 @@ run (Run ac) = do
 --
 -- >>> -- all fine
 -- >>> let t = Tariff 10 $ Usage 500 230 270
--- >>> let ut = UsageThreshold Nothing Nothing
+-- >>> let at = AvailableThreshold Nothing Nothing
 -- >>> let bt = BalanceThreshold Nothing Nothing
--- >>> runReaderT (evalRes (Right t)) $ AppConfig (ProviderLogin "" "") [] ut bt
+-- >>> runReaderT (evalRes (Right t)) $ AppConfig (ProviderLogin "" "") [] at bt
 -- ------------------
 -- Balance:   10.0 €
 -- ------------------
@@ -57,11 +57,11 @@ run (Run ac) = do
 -- ------------------
 --
 --
--- >>> -- usage notification threshold
+-- >>> -- available notification threshold
 -- >>> let t = Tariff 10 $ Usage 500 230 270
--- >>> let ut = UsageThreshold (Just 280) Nothing
+-- >>> let at = AvailableThreshold (Just 280) Nothing
 -- >>> let bt = BalanceThreshold Nothing Nothing
--- >>> runReaderT (evalRes (Right t)) $ AppConfig (ProviderLogin "" "") [] ut bt
+-- >>> runReaderT (evalRes (Right t)) $ AppConfig (ProviderLogin "" "") [] at bt
 -- ------------------
 -- Balance:   10.0 €
 -- ------------------
@@ -69,14 +69,14 @@ run (Run ac) = do
 -- Used:      230 MB
 -- Available: 270 MB
 -- ------------------
--- usage below notification threshold!
+-- available below notification threshold!
 -- *** Exception: ExitFailure 1
 evalRes :: Either AppError Tariff -> ReaderT AppConfig IO ()
 -- handle successful result
 evalRes (Right t@(Tariff b u)) = do
   endpoints <- asks acPublishEndpoints
-  usageBelowWarning <- isBelowWarning u
-  usageBelowNotification <- isBelowNotification u
+  availableBelowWarning <- isBelowWarning u
+  availableBelowNotification <- isBelowNotification u
   balanceBelowWarning <- isBelowWarning b
   balanceBelowNotification <- isBelowNotification b
   lift $ do
@@ -94,8 +94,8 @@ evalRes (Right t@(Tariff b u)) = do
            putStrLn "------------------"
            publishTariff endpoints $ t { tUsage = Usage 0 0 0 }
            exitWith (ExitFailure 2)
-    when usageBelowWarning $ putStrLn "usage below warning threshold!" >> exitWith (ExitFailure 2)
-    when usageBelowNotification $ putStrLn "usage below notification threshold!" >> exitWith (ExitFailure 1)
+    when availableBelowWarning $ putStrLn "available below warning threshold!" >> exitWith (ExitFailure 2)
+    when availableBelowNotification $ putStrLn "available below notification threshold!" >> exitWith (ExitFailure 1)
     when balanceBelowWarning $ putStrLn "balance below warning threshold!" >> exitWith (ExitFailure 2)
     when balanceBelowNotification $ putStrLn "balance below notification threshold!" >> exitWith (ExitFailure 1)
 -- handle errors

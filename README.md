@@ -21,30 +21,30 @@ query data usage for the umts card in the hackspace.
                               [--pub-used <PUBLISH URL FOR USED>]
                               [--pub-available <PUBLISH URL FOR AVAILABLE>]
                               [--pub-balance <PUBLISH URL FOR BALANCE>]
-                              [--usage-notification ARG] [--usage-warning ARG]
+                              [--available-notification ARG] [--available-warning ARG]
                               [--balance-notification ARG] [--balance-warning ARG])
           run it to show the current usage, use '--pub-xxx' switch to publish the
           values. use $ts$ for the current timestamp in ms epoch and $value$ for the
           current value in the url.
 
         Available options:
-          -h,--help                Show this help text
-          -v,--version             app version
-          -u,--user <USER>         provider login user
-          -p,--pass <PASS>         provider login password
+          -h,--help                    Show this help text
+          -v,--version                 app version
+          -u,--user <USER>             provider login user
+          -p,--pass <PASS>             provider login password
           --pub-quota <PUBLISH URL FOR QUOTA>
-                                   endpoint for quota value
+                                       endpoint for quota value
           --pub-used <PUBLISH URL FOR USED>
-                                   endpoint for used value
+                                       endpoint for used value
           --pub-available <PUBLISH URL FOR AVAILABLE>
-                                   endpoint for available value
+                                       endpoint for available value
           --pub-balance <PUBLISH URL FOR BALANCE>
-                                   endpoint for current balance
-          --usage-notification ARG usage notification threshold
-          --usage-warning ARG      usage warning threshold
+                                       endpoint for current balance
+          --available-notification ARG available notification threshold
+          --available-warning ARG      available warning threshold
           --balance-notification ARG
-                                   balance notification threshold
-          --balance-warning ARG    balance warning threshold
+                                       balance notification threshold
+          --balance-warning ARG        balance warning threshold
 
 
 
@@ -106,9 +106,9 @@ currently the following holes are replaced in the '--pub-xxx' url:
 
 
   * 0: all fine
-  * 1: usage-available < (value of parameter --usage-notification)
+  * 1: usage-available < (value of parameter --available-notification)
   * 1: balance-available < (value of parameter --balance-notification)
-  * 2: usage-available < (value of parameter --usage-warning)
+  * 2: usage-available < (value of parameter --available-warning)
   * 2: balance-available < (value of parameter --balance-warning)
   * 2: quota exhausted
 

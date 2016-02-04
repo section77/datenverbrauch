@@ -23,10 +23,10 @@ data AppArgs = ShowVersion
 
 
 data AppConfig = AppConfig {
-      acProviderLogin    :: ProviderLogin
-    , acPublishEndpoints :: Endpoints
-    , acUsageThreshold   :: UsageThreshold
-    , acBalanceThreshold :: BalanceThreshold
+      acProviderLogin      :: ProviderLogin
+    , acPublishEndpoints   :: Endpoints
+    , acAvailableThreshold :: AvailableThreshold
+    , acBalanceThreshold   :: BalanceThreshold
     } deriving Show
 
 
@@ -45,9 +45,9 @@ data Endpoint = EndpointQuota String
 
 
 
-data UsageThreshold = UsageThreshold {
-                        utNotification :: Maybe Int
-                      , utWarning      :: Maybe Int
+data AvailableThreshold = AvailableThreshold {
+                        atNotification :: Maybe Int
+                      , atWarning      :: Maybe Int
                       } deriving Show
 
 data BalanceThreshold = BalanceThreshold {
@@ -82,13 +82,13 @@ instance IsBelowThreshold Usage where
 
     isBelowNotification UsageNotAvailable = pure False
     isBelowNotification (Usage _ _ a) = do
-                                  n <- utNotification <$> asks acUsageThreshold
+                                  n <- atNotification <$> asks acAvailableThreshold
                                   pure $ maybe False (> a) n
 
 
     isBelowWarning UsageNotAvailable = pure False
     isBelowWarning (Usage _ _ a) = do
-                                  w <- utWarning <$> asks acUsageThreshold
+                                  w <- atWarning <$> asks acAvailableThreshold
                                   pure $ maybe False (> a) w
 
 
