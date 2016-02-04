@@ -54,11 +54,12 @@ run (Run ac) = do
 -- Quota:     500 MB
 -- Used:      230 MB
 -- Available: 270 MB
+-- ------------------
 --
 --
 -- >>> -- usage notification threshold
 -- >>> let t = Tariff 10 $ Usage 500 230 270
--- >>> let ut = UsageThreshold (Just 260) Nothing
+-- >>> let ut = UsageThreshold (Just 280) Nothing
 -- >>> let bt = BalanceThreshold Nothing Nothing
 -- >>> runReaderT (evalRes (Right t)) $ AppConfig (ProviderLogin "" "") [] ut bt
 -- ------------------
@@ -67,6 +68,7 @@ run (Run ac) = do
 -- Quota:     500 MB
 -- Used:      230 MB
 -- Available: 270 MB
+-- ------------------
 -- usage below notification threshold!
 -- *** Exception: ExitFailure 1
 evalRes :: Either AppError Tariff -> ReaderT AppConfig IO ()
