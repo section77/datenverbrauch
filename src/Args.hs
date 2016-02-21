@@ -55,19 +55,19 @@ endpoints = fmap catMaybes $ pack <$> quota <*> used <*> available <*> balance
 availableThreshold :: Parser AvailableThreshold
 availableThreshold = AvailableThreshold
             <$> (optional $ option auto
-                              ( long "available-notification"
-                              <> help "available notification threshold"))
-            <*> (optional $ option auto
                               ( long "available-warning"
                               <> help "available warning threshold"))
+            <*> (optional $ option auto
+                              ( long "available-critical"
+                              <> help "available critical threshold"))
 
 
 
 balanceThreshold :: Parser BalanceThreshold
 balanceThreshold = BalanceThreshold
                    <$> (optional $ option auto
-                                     ( long "balance-notification"
-                                     <> help "balance notification threshold"))
-                   <*> (optional $ option auto
                                      ( long "balance-warning"
-                                      <> help "balance warning threshold"))
+                                     <> help "balance warning threshold"))
+                   <*> (optional $ option auto
+                                     ( long "balance-critical"
+                                      <> help "balance critical threshold"))

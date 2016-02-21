@@ -47,13 +47,13 @@ data Endpoint = EndpointQuota String
 
 
 data AvailableThreshold = AvailableThreshold {
-                        atNotification :: Maybe Int
-                      , atWarning      :: Maybe Int
+                        atWarning  :: Maybe Int
+                      , atCritical :: Maybe Int
                       } deriving Show
 
 data BalanceThreshold = BalanceThreshold {
-                          btNotification :: Maybe Balance
-                        , btWarning      :: Maybe Balance
+                          btWarning  :: Maybe Balance
+                        , btCritical :: Maybe Balance
                         } deriving Show
 
 type Balance = Float
@@ -74,33 +74,33 @@ data Usage = UsageNotAvailable
 
 
 class IsBelowThreshold a where
-    isBelowNotification :: a -> ReaderT AppConfig IO Bool
-
     isBelowWarning :: a -> ReaderT AppConfig IO Bool
+
+    isBelowCritical :: a -> ReaderT AppConfig IO Bool
 
 
 instance IsBelowThreshold Usage where
 
-    isBelowNotification UsageNotAvailable = pure False
-    isBelowNotification (Usage _ _ a) = do
-                                  n <- atNotification <$> asks acAvailableThreshold
+    isBelowWarning UsageNotAvailable = pure False
+    isBelowWarning (Usage _ _ a) = do
+                                  n <- atWarning <$> asks acAvailableThreshold
                                   pure $ maybe False (> a) n
 
 
-    isBelowWarning UsageNotAvailable = pure False
-    isBelowWarning (Usage _ _ a) = do
-                                  w <- atWarning <$> asks acAvailableThreshold
+    isBelowCritical UsageNotAvailable = pure False
+    isBelowCritical (Usage _ _ a) = do
+                                  w <- atCritical <$> asks acAvailableThreshold
                                   pure $ maybe False (> a) w
 
 
 
 instance IsBelowThreshold Balance where
 
-    isBelowNotification b = do
-      n <- btNotification <$> asks acBalanceThreshold
+    isBelowWarning b = do
+      n <- btWarning <$> asks acBalanceThreshold
       pure $ maybe False (> b) n
 
 
-    isBelowWarning b = do
-      w <- btWarning <$> asks acBalanceThreshold
+    isBelowCritical b = do
+      w <- btCritical <$> asks acBalanceThreshold
       pure $ maybe False (> b) w

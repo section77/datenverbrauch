@@ -58,7 +58,7 @@ run (Run ac) = do
 -- ------------------
 --
 --
--- >>> -- available notification threshold
+-- >>> -- available warning threshold
 -- >>> let t = Tariff 10 $ Usage 500 230 270
 -- >>> let at = AvailableThreshold (Just 280) Nothing
 -- >>> let bt = BalanceThreshold Nothing Nothing
@@ -70,15 +70,15 @@ run (Run ac) = do
 -- Used:      230 MB
 -- Available: 270 MB
 -- ------------------
--- available below notification threshold!
+-- available below warning threshold!
 -- *** Exception: ExitFailure 1
 evalRes :: Either AppError Tariff -> ReaderT AppConfig IO ()
 -- handle successful result
 evalRes (Right t@(Tariff b u)) = do
+  availableBelowCritial <- isBelowCritical u
   availableBelowWarning <- isBelowWarning u
-  availableBelowNotification <- isBelowNotification u
-  balanceBelowWarning <- isBelowWarning b
-  balanceBelowNotification <- isBelowNotification b
+  balanceBelowWarning <- isBelowCritical b
+  balanceBelowNotification <- isBelowWarning b
   log $ concat [
            "------------------\n"
           , printf "Balance:   %f €\n" b
@@ -100,24 +100,24 @@ evalRes (Right t@(Tariff b u)) = do
          publishTariff (t { tUsage = Usage 0 0 0 })
          lift $ exitWith (ExitFailure 2)
 
-  when availableBelowWarning $ do
-    log "available below warning threshold!"
+  when availableBelowCritial $ do
+    log "available below critial threshold!"
+    lift $ exitWith (ExitFailure 2)
+
+  when availableBelowCritial $ do
+    log "available below critial threshold!"
     lift $ exitWith (ExitFailure 2)
 
   when availableBelowWarning $ do
     log "available below warning threshold!"
-    lift $ exitWith (ExitFailure 2)
-
-  when availableBelowNotification $ do
-    log "available below notification threshold!"
     lift $ exitWith (ExitFailure 1)
 
   when balanceBelowWarning $ do
-    log "balance below warning threshold!"
+    log "balance below critial threshold!"
     lift $ exitWith (ExitFailure 2)
 
   when balanceBelowNotification $ do
-    log "balance below notification threshold!"
+    log "balance below warning threshold!"
     lift $ exitWith (ExitFailure 1)
 
 -- handle errors
