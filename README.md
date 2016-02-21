@@ -16,8 +16,8 @@ query data usage for the umts card in the hackspace.
         ./datenverbrauch -h
         datenverbrauch - query internet access data usage
 
-        Usage: datenverbrauch ((-v|--version) | (-u|--user <USER>) (-p|--pass <PASS>)
-                              [--pub-quota <PUBLISH URL FOR QUOTA>]
+        Usage: datenverbrauch ((-v|--version) | [-q|--quiet] (-u|--user <USER>)
+                              (-p|--pass <PASS>) [--pub-quota <PUBLISH URL FOR QUOTA>]
                               [--pub-used <PUBLISH URL FOR USED>]
                               [--pub-available <PUBLISH URL FOR AVAILABLE>]
                               [--pub-balance <PUBLISH URL FOR BALANCE>]
@@ -26,10 +26,11 @@ query data usage for the umts card in the hackspace.
           run it to show the current usage, use '--pub-xxx' switch to publish the
           values. use $ts$ for the current timestamp in ms epoch and $value$ for the
           current value in the url.
-
+ 
         Available options:
           -h,--help                    Show this help text
           -v,--version                 app version
+          -q,--quiet               be quiet
           -u,--user <USER>             provider login user
           -p,--pass <PASS>             provider login password
           --pub-quota <PUBLISH URL FOR QUOTA>

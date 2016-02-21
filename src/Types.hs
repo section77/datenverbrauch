@@ -23,7 +23,8 @@ data AppArgs = ShowVersion
 
 
 data AppConfig = AppConfig {
-      acProviderLogin      :: ProviderLogin
+      acQuiet              :: Bool
+    , acProviderLogin      :: ProviderLogin
     , acPublishEndpoints   :: Endpoints
     , acAvailableThreshold :: AvailableThreshold
     , acBalanceThreshold   :: BalanceThreshold

@@ -6,8 +6,12 @@ import           Types
 
 appArgs :: Parser AppArgs
 appArgs = flag' ShowVersion (short 'v' <> long "version" <> help "app version")
-          <|> Run <$> (AppConfig <$> providerLogin <*> endpoints <*> availableThreshold <*> balanceThreshold)
+          <|> Run <$> (AppConfig <$> quiet <*> providerLogin <*> endpoints <*> availableThreshold <*> balanceThreshold)
 
+quiet :: Parser Bool
+quiet = switch (short 'q'
+               <> long "quiet"
+               <> help "be quiet")
 
 providerLogin :: Parser ProviderLogin
 providerLogin = ProviderLogin

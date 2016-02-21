@@ -2,7 +2,7 @@
 module Main where
 
 import           Args
-import           Control.Monad              (when)
+import           Control.Monad              (unless, when)
 import           Control.Monad.Trans.Class  (lift)
 import           Control.Monad.Trans.Except
 import           Control.Monad.Trans.Reader
@@ -10,6 +10,7 @@ import           Data.Time
 import           Data.Version               (showVersion)
 import           Options.Applicative
 import           Paths_datenverbrauch       (version)
+import           Prelude                    hiding (log)
 import           PublishTariff
 import           QueryTariff
 import           System.Exit                (ExitCode (..), exitWith)
@@ -30,7 +31,7 @@ main = execParser opts >>= run
 run :: AppArgs -> IO ()
 run ShowVersion = putStrLn ("version: " ++ showVersion version)
 run (Run ac) = do
-  printHeader
+  unless (acQuiet ac) $ printHeader
   res <- runExceptT $ runReaderT queryTariff ac
   runReaderT (evalRes res) ac
     where printHeader = do
@@ -47,7 +48,7 @@ run (Run ac) = do
 -- >>> let t = Tariff 10 $ Usage 500 230 270
 -- >>> let at = AvailableThreshold Nothing Nothing
 -- >>> let bt = BalanceThreshold Nothing Nothing
--- >>> runReaderT (evalRes (Right t)) $ AppConfig (ProviderLogin "" "") [] at bt
+-- >>> runReaderT (evalRes (Right t)) $ AppConfig False (ProviderLogin "" "") [] at bt
 -- ------------------
 -- Balance:   10.0 €
 -- ------------------
@@ -61,7 +62,7 @@ run (Run ac) = do
 -- >>> let t = Tariff 10 $ Usage 500 230 270
 -- >>> let at = AvailableThreshold (Just 280) Nothing
 -- >>> let bt = BalanceThreshold Nothing Nothing
--- >>> runReaderT (evalRes (Right t)) $ AppConfig (ProviderLogin "" "") [] at bt
+-- >>> runReaderT (evalRes (Right t)) $ AppConfig False (ProviderLogin "" "") [] at bt
 -- ------------------
 -- Balance:   10.0 €
 -- ------------------
@@ -74,30 +75,51 @@ run (Run ac) = do
 evalRes :: Either AppError Tariff -> ReaderT AppConfig IO ()
 -- handle successful result
 evalRes (Right t@(Tariff b u)) = do
-  endpoints <- asks acPublishEndpoints
   availableBelowWarning <- isBelowWarning u
   availableBelowNotification <- isBelowNotification u
   balanceBelowWarning <- isBelowWarning b
   balanceBelowNotification <- isBelowNotification b
-  lift $ do
-    printf "------------------\n"
-    printf "Balance:   %f €\n" b
-    printf "------------------\n"
-    if isUsageAvailable u then do
-            printf "Quota:     %d MB\n" $ uQuota u
-            printf "Used:      %d MB\n" $ uUsed u
-            printf "Available: %d MB\n" $ uAvailable u
-            printf "------------------\n"
-            publishTariff endpoints t
-    else do
-           putStrLn "Usage not available - quota exhausted? (publish zeros)"
-           putStrLn "------------------"
-           publishTariff endpoints $ t { tUsage = Usage 0 0 0 }
-           exitWith (ExitFailure 2)
-    when availableBelowWarning $ putStrLn "available below warning threshold!" >> exitWith (ExitFailure 2)
-    when availableBelowNotification $ putStrLn "available below notification threshold!" >> exitWith (ExitFailure 1)
-    when balanceBelowWarning $ putStrLn "balance below warning threshold!" >> exitWith (ExitFailure 2)
-    when balanceBelowNotification $ putStrLn "balance below notification threshold!" >> exitWith (ExitFailure 1)
+  log $ concat [
+           "------------------\n"
+          , printf "Balance:   %f €\n" b
+          , "------------------"
+          ]
+  if isUsageAvailable u then
+      do log $ concat [
+                   printf "Quota:     %d MB\n" (uQuota u)
+                 , printf "Used:      %d MB\n" (uUsed u)
+                 , printf "Available: %d MB\n" (uAvailable u)
+                 , printf "------------------"
+                 ]
+         publishTariff t
+  else
+      do log $ concat [
+                  "Usage not available - quota exhausted? (publish zeros for usage)\n"
+                 , "------------------"
+                 ]
+         publishTariff (t { tUsage = Usage 0 0 0 })
+         lift $ exitWith (ExitFailure 2)
+
+  when availableBelowWarning $ do
+    log "available below warning threshold!"
+    lift $ exitWith (ExitFailure 2)
+
+  when availableBelowWarning $ do
+    log "available below warning threshold!"
+    lift $ exitWith (ExitFailure 2)
+
+  when availableBelowNotification $ do
+    log "available below notification threshold!"
+    lift $ exitWith (ExitFailure 1)
+
+  when balanceBelowWarning $ do
+    log "balance below warning threshold!"
+    lift $ exitWith (ExitFailure 2)
+
+  when balanceBelowNotification $ do
+    log "balance below notification threshold!"
+    lift $ exitWith (ExitFailure 1)
+
 -- handle errors
 evalRes (Left e) = lift $ do
                   putStrLn $ "ERROR: " ++ show e
@@ -110,3 +132,9 @@ evalRes (Left e) = lift $ do
 isUsageAvailable :: Usage -> Bool
 isUsageAvailable UsageNotAvailable = False
 isUsageAvailable _ = True
+
+
+log :: String -> ReaderT AppConfig IO ()
+log msg = do
+  quiet <- asks acQuiet
+  unless quiet $ lift . putStrLn $ msg
