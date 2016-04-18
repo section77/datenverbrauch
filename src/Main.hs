@@ -79,11 +79,13 @@ evalRes (Right t@(Tariff b u)) = do
   availableBelowWarning <- isBelowWarning u
   balanceBelowWarning <- isBelowCritical b
   balanceBelowNotification <- isBelowWarning b
-  log $ concat [
-           "------------------\n"
-          , printf "Balance:   %f €\n" b
-          , "------------------"
-          ]
+  case b of
+    (Balance bv) -> log $ concat [
+                     "------------------\n"
+                    , printf "Balance:   %f €\n" bv
+                    , "------------------"
+                    ]
+    BalanceNotAvailable -> log "Balance not available\n"
   if isUsageAvailable u then
       do log $ concat [
                    printf "Quota:     %d MB\n" (uQuota u)

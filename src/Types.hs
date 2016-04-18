@@ -11,7 +11,6 @@ type App a = ReaderT AppConfig (ExceptT AppError IO) a
 data AppError = LoginError String
               | BodyNotParsable
               | BalanceNotFound
-              | BalanceNotExtractable
               | UsageNotExtractable
               | PublisherError String
               deriving Show
@@ -52,15 +51,19 @@ data AvailableThreshold = AvailableThreshold {
                       } deriving Show
 
 data BalanceThreshold = BalanceThreshold {
-                          btWarning  :: Maybe Balance
-                        , btCritical :: Maybe Balance
+                          btWarning  :: Maybe Float
+                        , btCritical :: Maybe Float
                         } deriving Show
 
-type Balance = Float
+
 data Tariff = Tariff {
       tBalance :: Balance
     , tUsage   :: Usage
     } deriving Show
+
+
+data Balance = BalanceNotAvailable
+             | Balance Float deriving Show
 
 
 data Usage = UsageNotAvailable
@@ -96,11 +99,13 @@ instance IsBelowThreshold Usage where
 
 instance IsBelowThreshold Balance where
 
-    isBelowWarning b = do
+    isBelowWarning BalanceNotAvailable = pure False
+    isBelowWarning (Balance b) = do
       n <- btWarning <$> asks acBalanceThreshold
       pure $ maybe False (> b) n
 
 
-    isBelowCritical b = do
+    isBelowCritical BalanceNotAvailable = pure False
+    isBelowCritical (Balance b) = do
       w <- btCritical <$> asks acBalanceThreshold
       pure $ maybe False (> b) w

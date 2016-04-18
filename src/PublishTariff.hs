@@ -31,7 +31,8 @@ publish ts t quiet e = do
 
 
 resolve :: Tariff -> Endpoint -> Maybe (String, String)
-resolve (Tariff b _) (EndpointBalance url) = Just (url, show b)
+resolve (Tariff (Balance b) _) (EndpointBalance url) = Just (url, show b)
+resolve (Tariff BalanceNotAvailable _) (EndpointBalance _) = Nothing
 resolve (Tariff _ UsageNotAvailable) _ = Nothing
 resolve (Tariff _ u) (EndpointQuota url) = Just (url, show $ uQuota u)
 resolve (Tariff _ u) (EndpointUsed url) = Just (url, show $ uUsed u)

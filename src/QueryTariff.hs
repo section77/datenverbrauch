@@ -36,12 +36,12 @@ parseDocument :: BL.ByteString -> Either AppError Document
 parseDocument bs = maybe (Left BodyNotParsable) Right $ parseXMLDoc bs
 
 
-extractBalance :: Document -> Either AppError Float
+extractBalance :: Document -> Either AppError Balance
 extractBalance doc = maybe (Left BalanceNotFound) extract $ filterElement (hasAttrVal "class" "amount") doc
           -- <p class="amount">x,xx €</p>
     where extract (words . strContent -> [b, _]) = Right $ read' b
-          extract _ = Left BalanceNotExtractable
-          read' = read . map (\c -> if(c == ',') then '.' else c)
+          extract _ = Right BalanceNotAvailable
+          read' = Balance . read . map (\c -> if(c == ',') then '.' else c)
 
 
 extractUsage :: Document -> Either AppError Usage
