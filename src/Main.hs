@@ -22,7 +22,7 @@ main = execParser opts >>= run
     where opts = info (helper <*> appArgs)
                  (fullDesc
                  <> progDesc (unlines [ "run it to show the current usage, use '--pub-xxx' switch to publish the values."
-                                      , "use $ts$ for the current timestamp in ms epoch and $value$ for the current value in the url."
+                                      , "use $ts$ for the current timestamp in ms epoch and $value$ for the current value in the url"
                                       ])
                  <> header "datenverbrauch - query internet access data usage")
 
@@ -45,10 +45,11 @@ run (Run ac) = do
 -- | eval the run result
 --
 -- >>> -- all fine
--- >>> let t = Tariff 10 $ Usage 500 230 270
+-- >>> let t = Tariff (Balance 10) (Usage 500 230 270) 21
 -- >>> let at = AvailableThreshold Nothing Nothing
 -- >>> let bt = BalanceThreshold Nothing Nothing
--- >>> runReaderT (evalRes (Right t)) $ AppConfig False (ProviderLogin "" "") [] at bt
+-- >>> let cfg = AppConfig False (ProviderLogin "" "") [] at bt "http://provider.url.com"
+-- >>> runReaderT (evalRes (Right t)) cfg
 -- ------------------
 -- Balance:   10.0 €
 -- ------------------
@@ -56,13 +57,15 @@ run (Run ac) = do
 -- Used:      230 MB
 -- Available: 270 MB
 -- ------------------
+-- Days left: 21
 --
 --
 -- >>> -- available warning threshold
--- >>> let t = Tariff 10 $ Usage 500 230 270
+-- >>> let t = Tariff (Balance 10) (Usage 500 230 270) 21
 -- >>> let at = AvailableThreshold (Just 280) Nothing
 -- >>> let bt = BalanceThreshold Nothing Nothing
--- >>> runReaderT (evalRes (Right t)) $ AppConfig False (ProviderLogin "" "") [] at bt
+-- >>> let cfg = AppConfig False (ProviderLogin "" "") [] at bt "http://provider.url.com"
+-- >>> runReaderT (evalRes (Right t)) cfg
 -- ------------------
 -- Balance:   10.0 €
 -- ------------------
@@ -70,11 +73,12 @@ run (Run ac) = do
 -- Used:      230 MB
 -- Available: 270 MB
 -- ------------------
+-- Days left: 21
 -- available below warning threshold!
 -- *** Exception: ExitFailure 1
 evalRes :: Either AppError Tariff -> ReaderT AppConfig IO ()
 -- handle successful result
-evalRes (Right t@(Tariff b u)) = do
+evalRes (Right t@(Tariff b u l)) = do
   availableBelowCritial <- isBelowCritical u
   availableBelowWarning <- isBelowWarning u
   balanceBelowWarning <- isBelowCritical b
@@ -101,6 +105,7 @@ evalRes (Right t@(Tariff b u)) = do
                  ]
          publishTariff (t { tUsage = Usage 0 0 0 })
          lift $ exitWith (ExitFailure 2)
+  log $ printf "Days left: %d" l
 
   when availableBelowCritial $ do
     log "available below critial threshold!"

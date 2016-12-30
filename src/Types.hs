@@ -1,17 +1,18 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 module Types where
 
+import           BasicPrelude
 import           Control.Monad.Trans.Except
 import           Control.Monad.Trans.Reader
-
 
 type App a = ReaderT AppConfig (ExceptT AppError IO) a
 
 
-data AppError = LoginError String
-              | BodyNotParsable
+data AppError = LoginError Text
               | BalanceNotFound
               | UsageNotExtractable
+              | EndDateNotFound
+              | EndDateNotParsable String
               | PublisherError String
               deriving Show
 
@@ -20,6 +21,7 @@ data AppArgs = ShowVersion
              | Run AppConfig
                deriving Show
 
+type ProviderBaseUrl = String
 
 data AppConfig = AppConfig {
       acQuiet              :: Bool
@@ -27,6 +29,7 @@ data AppConfig = AppConfig {
     , acPublishEndpoints   :: Endpoints
     , acAvailableThreshold :: AvailableThreshold
     , acBalanceThreshold   :: BalanceThreshold
+    , acProviderBaseUrl    :: ProviderBaseUrl
     } deriving Show
 
 
@@ -41,6 +44,7 @@ data Endpoint = EndpointQuota String
               | EndpointUsed String
               | EndpointAvailable String
               | EndpointBalance String
+              | EndpointDaysLeft String
                 deriving Show
 
 
@@ -57,8 +61,9 @@ data BalanceThreshold = BalanceThreshold {
 
 
 data Tariff = Tariff {
-      tBalance :: Balance
-    , tUsage   :: Usage
+      tBalance  :: Balance
+    , tUsage    :: Usage
+    , tDaysLeft :: Integer
     } deriving Show
 
 

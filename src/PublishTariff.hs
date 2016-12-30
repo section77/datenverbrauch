@@ -1,10 +1,9 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 module PublishTariff where
 
-import           Control.Exception
-import           Control.Monad              (unless)
-import           Control.Monad.Trans.Class  (lift)
+import           BasicPrelude
 import           Control.Monad.Trans.Reader
-import qualified Data.ByteString.Lazy       as BL
 import           Data.Time.Clock.POSIX
 import qualified Network.Wreq               as W
 import qualified Text.StringTemplate        as ST
@@ -15,7 +14,7 @@ publishTariff :: Tariff -> ReaderT AppConfig IO ()
 publishTariff t = do
   endpoints <- asks acPublishEndpoints
   quiet <- asks acQuiet
-  ts <- lift $ show . round . (* 1000) <$> getPOSIXTime
+  ts <- lift $ textToString . show . round . (* 1000) <$> getPOSIXTime
   lift $ mapM_ (publish ts t quiet) endpoints
 
 
@@ -23,17 +22,19 @@ publishTariff t = do
 publish :: String -> Tariff -> Bool -> Endpoint -> IO ()
 publish ts t quiet e = do
   maybe (pure ()) (post . enrich) $ resolve t e
-  where enrich (url, value) = ST.render $ ST.setManyAttrib [("ts", ts), ("value", value)] $ ST.newSTMP url
+  where enrich (url, value) = ST.render $ ST.setManyAttrib [("ts", ts), ("value", textToString value)] $ ST.newSTMP url
         post url = do
           unless quiet $ putStr $ "Publish to: " ++ url
-          res <- try $ W.post url BL.empty :: IO (Either SomeException (W.Response BL.ByteString))
+          res <- try $ W.post (textToString url) nix :: IO (Either SomeException (W.Response LByteString))
           unless quiet $ putStrLn $ either ((++) " - ERROR: " . show) (const " - OK") res
+        nix = mempty :: LByteString
 
 
-resolve :: Tariff -> Endpoint -> Maybe (String, String)
-resolve (Tariff (Balance b) _) (EndpointBalance url) = Just (url, show b)
-resolve (Tariff BalanceNotAvailable _) (EndpointBalance _) = Nothing
-resolve (Tariff _ UsageNotAvailable) _ = Nothing
-resolve (Tariff _ u) (EndpointQuota url) = Just (url, show $ uQuota u)
-resolve (Tariff _ u) (EndpointUsed url) = Just (url, show $ uUsed u)
-resolve (Tariff _ u) (EndpointAvailable url) = Just (url, show $ uAvailable u)
+resolve :: Tariff -> Endpoint -> Maybe (String, Text)
+resolve (Tariff (Balance b) _ _) (EndpointBalance url)       = Just (url, show b)
+resolve (Tariff BalanceNotAvailable _ _) (EndpointBalance _) = Nothing
+resolve (Tariff _ UsageNotAvailable _) _                     = Nothing
+resolve (Tariff _ u _) (EndpointQuota url)                   = Just (url, show $ uQuota u)
+resolve (Tariff _ u _) (EndpointUsed url)                    = Just (url, show $ uUsed u)
+resolve (Tariff _ u _) (EndpointAvailable url)               = Just (url, show $ uAvailable u)
+resolve (Tariff _ _ dl) (EndpointDaysLeft url)               = Just (url, show dl)

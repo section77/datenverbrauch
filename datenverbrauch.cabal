@@ -22,14 +22,15 @@ executable datenverbrauch
                       , QueryTariff
                       , Types
   build-depends:       base >= 4.7 && < 5
+                     , basic-prelude
                      , bytestring
                      , lens
                      , optparse-applicative
+                     , tagsoup
                      , text
                      , time
                      , transformers
                      , wreq
-                     , xml
                      , HStringTemplate
 
 test-suite doctest
