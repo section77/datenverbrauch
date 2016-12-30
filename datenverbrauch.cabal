@@ -1,5 +1,5 @@
 name:                datenverbrauch
-version:             0.2.4
+version:             0.2.5-SNAPSHOT
 synopsis:            Simple project template from stack
 description:         Please see README.md
 homepage:            http://github.com/section77/datenverbrauch#readme
@@ -32,6 +32,7 @@ executable datenverbrauch
                      , transformers
                      , wreq
                      , HStringTemplate
+  default-extensions: NoImplicitPrelude
 
 test-suite doctest
   type:                exitcode-stdio-1.0
