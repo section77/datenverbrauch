@@ -61,7 +61,7 @@ extractUsage tags = maybe (Right UsageNotAvailable) extract $ maybeUsageTag tags
         extract x = case (words . show) x of
                              [_, _, available, _, quota, _, _, _] -> let available' = read available
                                                                          quota' = read quota
-                                                                     in Right $ Usage available' (quota' - available') quota'
+                                                                     in Right $ Usage quota' (quota' - available') available'
                              _                                    -> Left UsageNotExtractable
 
 
