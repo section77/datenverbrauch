@@ -5,7 +5,7 @@ github: section77/datenverbrauch
 license: MIT
 author: j-keck <jhyphenkeck@gmail.com>
 
-ghc-options: -Wall    
+ghc-options: -Wall -optl-static -optl-pthread
 default-extensions: NoImplicitPrelude
 
 executables:

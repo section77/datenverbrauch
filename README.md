@@ -110,7 +110,16 @@ currently the following holes are replaced in the '--pub-xxx' url:
 
 ## install
 
+### binary:
+
+ see: https://github.com/section77/datenverbrauch/releases
+
+__static linked executables for linux x86_64 are build in a alpine container.__
+
+### from source:
+
  * install [stack](http://haskellstack.org), the build tool
+ * clone this repository `git clone https://github.com/section77/datenverbrauch`
  * change in the project directory: `cd datenverbrauch`
  * build it: `stack install`
 
