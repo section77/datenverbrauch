@@ -1,0 +1,34 @@
+name: datenverbrauch
+version: 0.2.5-SNAPSHOT
+description: query data usage from alditalk-kundenbetreuung.de
+github: section77/datenverbrauch
+license: MIT
+author: j-keck <jhyphenkeck@gmail.com>
+
+ghc-options: -Wall    
+default-extensions: NoImplicitPrelude
+
+executables:
+  datenverbrauch:
+    main: Main.hs
+    source-dirs: src
+    dependencies:
+      - base >= 4.7 && < 5
+      - basic-prelude
+      - bytestring
+      - lens
+      - optparse-applicative
+      - tagsoup
+      - text
+      - time
+      - transformers
+      - wreq
+      - HStringTemplate
+
+tests:
+  doctest:
+    main: doctest.hs
+    source-dirs: test
+    dependencies:
+      - doctest
+      - basic-prelude

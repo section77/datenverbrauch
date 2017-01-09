@@ -1,45 +1,54 @@
+-- This file has been generated from package.yaml by hpack version 0.14.1.
+--
+-- see: https://github.com/sol/hpack
+
 name:                datenverbrauch
 version:             0.2.5-SNAPSHOT
-synopsis:            Simple project template from stack
-description:         Please see README.md
-homepage:            http://github.com/section77/datenverbrauch#readme
+description:         query data usage from alditalk-kundenbetreuung.de
+homepage:            https://github.com/section77/datenverbrauch#readme
+bug-reports:         https://github.com/section77/datenverbrauch/issues
 license:             MIT
 license-file:        LICENSE
-author:              j-keck
-maintainer:          jhyphenkeck@gmail.com
-category:            Web
+author:              j-keck <jhyphenkeck@gmail.com>
 build-type:          Simple
-cabal-version:       >=1.10
+cabal-version:       >= 1.10
+
+source-repository head
+  type: git
+  location: https://github.com/section77/datenverbrauch
 
 executable datenverbrauch
-  hs-source-dirs:      src
-  main-is:             Main.hs
-  default-language:    Haskell2010
-  ghc-options:         -W
-  other-modules:       Args
-                      , Paths_datenverbrauch
-                      , PublishTariff
-                      , QueryTariff
-                      , Types
-  build-depends:       base >= 4.7 && < 5
-                     , basic-prelude
-                     , bytestring
-                     , lens
-                     , optparse-applicative
-                     , tagsoup
-                     , text
-                     , time
-                     , transformers
-                     , wreq
-                     , HStringTemplate
+  hs-source-dirs:
+      src
+  main-is: Main.hs
+  default-language: Haskell2010
+  ghc-options: -Wall
+  build-depends:
+      base >= 4.7 && < 5
+    , basic-prelude
+    , bytestring
+    , lens
+    , optparse-applicative
+    , tagsoup
+    , text
+    , time
+    , transformers
+    , wreq
+    , HStringTemplate
+  other-modules:
+      Args
+      PublishTariff
+      QueryTariff
+      Types
   default-extensions: NoImplicitPrelude
 
 test-suite doctest
-  type:                exitcode-stdio-1.0
-  hs-source-dirs:      test
-  main-is:             doctest.hs
-  build-depends:       base
-                     , doctest
-  default-language:    Haskell2010
-                     
-
+  type: exitcode-stdio-1.0
+  main-is: doctest.hs
+  hs-source-dirs:
+      test
+  default-extensions: NoImplicitPrelude
+  ghc-options: -Wall
+  build-depends:
+      doctest
+  default-language: Haskell2010

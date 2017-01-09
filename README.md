@@ -1,19 +1,14 @@
-# datenverbrauch (data usage)
+# datenverbrauch - query internet access data usage
 
-query data usage for the umts card in the hackspace.
+for the internet access in our hackspace we use a umts card from 'alditalk'.
 
-
-## birdview
-
-  * login in provider webapp
-  * find / parse balance
-  * find / parse usage
-  * publish values to endpoint (POST with values encoded in the URL)
+to keep a eye on our usage, we use `datenverbrauch` to extract the values from their website
+and feed it per 'POST' request (values encoded in the URL) in a statistics webapp.
 
 
 ## usage
 
-        ./datenverbrauch -h
+        [j@main ~]$ datenverbrauch -h
         datenverbrauch - query internet access data usage
 
         Usage: datenverbrauch ((-v|--version) | [-q|--quiet] (-u|--user <USER>)
@@ -21,12 +16,14 @@ query data usage for the umts card in the hackspace.
                               [--pub-used <PUBLISH URL FOR USED>]
                               [--pub-available <PUBLISH URL FOR AVAILABLE>]
                               [--pub-balance <PUBLISH URL FOR BALANCE>]
+                              [--pub-days-left <PUBLISH URL FOR PREPAID DAYS LEFT>]
                               [--available-warning ARG] [--available-critical ARG]
-                              [--balance-warning ARG] [--balance-critical ARG])
+                              [--balance-warning ARG] [--balance-critical ARG]
+                              [--provider-base-url PROVIDER_BASE_URL])
           run it to show the current usage, use '--pub-xxx' switch to publish the
           values. use $ts$ for the current timestamp in ms epoch and $value$ for the
           current value in the url.
-
+        
         Available options:
           -h,--help                Show this help text
           -v,--version             app version
@@ -41,10 +38,16 @@ query data usage for the umts card in the hackspace.
                                    endpoint for available value
           --pub-balance <PUBLISH URL FOR BALANCE>
                                    endpoint for current balance
+          --pub-days-left <PUBLISH URL FOR PREPAID DAYS LEFT>
+                                   endpoint for prepaid days left
           --available-warning ARG  available warning threshold
           --available-critical ARG available critical threshold
           --balance-warning ARG    balance warning threshold
           --balance-critical ARG   balance critical threshold
+          --provider-base-url PROVIDER_BASE_URL
+                                   Base URL from the Provider Website to query the
+                                   current values
+
 
 
 currently the following holes are replaced in the '--pub-xxx' url:
@@ -57,52 +60,45 @@ currently the following holes are replaced in the '--pub-xxx' url:
 
 ## example
 
-  * query data usage
+  * query data usage and print it on stdout
 
-        ./datenverbrauch --user 0157..... --pass <PWD>
-        Startup - date: 30.12.2015 18:16
-        ------------------
-        Balance:   15.0 €
-        ------------------
+        [j@main ~]$ datenverbrauch --user 0157xxxxxxxx --pass xxxxxxxxxxxxxx
+        Startup - date: 09.01.2017 17:16 - version: 0.2.5-SNAPSHOT
+        --------------------
+        Balance:   20.13 €
+        --------------------
         Quota:     5120 MB
-        Used:      1166 MB
-        Available: 3954 MB
+        Used:       378 MB
+        Available: 4742 MB
+        --------------------
+        Days left:      18
+        --------------------
+
+
 
 
 
   * query data usage and publish the quota and used values
 
-        ./datenverbrauch --user 0157..... --pass <PWD> \
+        [j@main ~]$ datenverbrauch --user 0157xxxxxxxx --pass xxxxxxxxxxxxxx \
           --pub-quota 'http://httpbin.org/post?ts=$ts$&type=quota&value=$value$' \
           --pub-used 'http://httpbin.org/post?ts=$ts$&type=used&value=$value$'
-        Startup - date: 30.12.2015 18:19
-        Publish to: http://httpbin.org/post?ts=1451495814368&type=quota&value=5120 - OK
-        Publish to: http://httpbin.org/post?ts=1451495814368&type=used&value=1166 - OK
-        ------------------
-        Balance:   15.0 €
-        ------------------
+        Startup - date: 09.01.2017 17:19 - version: 0.2.5-SNAPSHOT
+        --------------------
+        Balance:   20.13 €
+        --------------------
         Quota:     5120 MB
-        Used:      1166 MB
-        Available: 3954 MB
+        Used:       378 MB
+        Available: 4742 MB
+        --------------------
+        Days left:      18
+        --------------------
+        Publish to: http://httpbin.org/post?ts=1483978799624&type=quota&value=4742 - OK
+        Publish to: http://httpbin.org/post?ts=1483978799624&type=used&value=378 - OK
 
-
-  * query data usage und publish the available value
-
-        datenverbrauch --user 0157..... --pass <PWD> \
-          --pub-available 'http://httpbin.org/post?name=av&value=$value$'
-        Startup - date: 30.12.2015 18:20
-        Publish to: http://httpbin.org/post&name=av&value=3954 - Ok
-        ------------------
-        Balance:   15.0 €
-        ------------------
-        Quota:     5120 MB
-        Used:      1166 MB
-        Available: 3954 MB
-          
 
 
 ## exit code
-
 
   * 0: all fine
   * 1: usage-available < (value of parameter --available-warning)
@@ -112,10 +108,11 @@ currently the following holes are replaced in the '--pub-xxx' url:
   * 2: quota exhausted
 
 
-## build / install
+## install
 
- * install [stack](https://www.stackage.org/) from [here](https://github.com/commercialhaskell/stack/blob/master/doc/install_and_upgrade.md)
- * stack install
+ * install [stack](http://haskellstack.org), the build tool
+ * change in the project directory: `cd datenverbrauch`
+ * build it: `stack install`
 
 this installs the application under '$HOME/.local/bin'
 

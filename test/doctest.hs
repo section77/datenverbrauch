@@ -1,7 +1,7 @@
 module Main where
 
+import           BasicPrelude
 import           Test.DocTest
-
 
 main :: IO ()
 main = doctest [

@@ -4,6 +4,7 @@ module PublishTariff where
 
 import           BasicPrelude
 import           Control.Monad.Trans.Reader
+import qualified Data.ByteString.Lazy       as BSL
 import           Data.Time.Clock.POSIX
 import qualified Network.Wreq               as W
 import qualified Text.StringTemplate        as ST
@@ -25,9 +26,8 @@ publish ts t quiet e = do
   where enrich (url, value) = ST.render $ ST.setManyAttrib [("ts", ts), ("value", textToString value)] $ ST.newSTMP url
         post url = do
           unless quiet $ putStr $ "Publish to: " ++ url
-          res <- try $ W.post (textToString url) nix :: IO (Either SomeException (W.Response LByteString))
+          res <- try $ W.post (textToString url) BSL.empty :: IO (Either SomeException (W.Response LByteString))
           unless quiet $ putStrLn $ either ((++) " - ERROR: " . show) (const " - OK") res
-        nix = mempty :: LByteString
 
 
 resolve :: Tariff -> Endpoint -> Maybe (String, Text)
