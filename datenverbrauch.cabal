@@ -27,6 +27,8 @@ executable datenverbrauch
       base >= 4.7 && < 5
     , basic-prelude
     , bytestring
+    , directory
+    , formatting
     , lens
     , optparse-applicative
     , tagsoup
@@ -37,6 +39,7 @@ executable datenverbrauch
     , HStringTemplate
   other-modules:
       Args
+      Persist
       PublishTariff
       QueryTariff
       Types

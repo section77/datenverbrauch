@@ -4,14 +4,25 @@ import           BasicPrelude
 import           Options.Applicative
 import           Types
 
+
 appArgs :: Parser AppArgs
 appArgs = flag' ShowVersion (short 'v' <> long "version" <> help "app version")
-          <|> Run <$> (AppConfig <$> quiet <*> providerLogin <*> endpoints <*> availableThreshold <*> balanceThreshold <*> providerBaseUrl)
+          <|> Run <$> (   AppConfig
+                      <$> quiet
+                      <*> providerLogin
+                      <*> persistPath
+                      <*> endpoints
+                      <*> availableThreshold
+                      <*> balanceThreshold
+                      <*> providerBaseUrl)
+
+
 
 quiet :: Parser Bool
 quiet = switch (short 'q'
                <> long "quiet"
                <> help "be quiet")
+
 
 providerLogin :: Parser ProviderLogin
 providerLogin = ProviderLogin
@@ -25,6 +36,12 @@ providerLogin = ProviderLogin
                         <> short 'p'
                         <> metavar "<PASS>"
                         <> help "provider login password")
+
+
+persistPath :: Parser (Maybe String)
+persistPath = optional $ strOption (  long "persist"
+                                   <> metavar "<DIRECTORY>"
+                                   <> help "directory path to persist values as csv")
 
 
 endpoints :: Parser Endpoints

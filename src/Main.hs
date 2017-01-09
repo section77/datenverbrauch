@@ -13,13 +13,14 @@ import           Options.Applicative
 import           Paths_datenverbrauch       (version)
 -- we use the standard prelude here and go with strings because
 -- optparse-applicative and printf expects strings
+import           BasicPrelude               (liftIO)
+import           Persist
 import           Prelude
 import           PublishTariff
 import           QueryTariff
 import           System.Exit                (ExitCode (..), exitWith)
 import           Text.Printf
 import           Types
-
 
 
 
@@ -58,7 +59,7 @@ run (Run ac) = do
 -- >>> let t = Tariff (Balance 10) (Usage 500 230 270) 21
 -- >>> let at = AvailableThreshold Nothing Nothing
 -- >>> let bt = BalanceThreshold Nothing Nothing
--- >>> let cfg = AppConfig False (ProviderLogin "" "") [] at bt "http://provider.url.com"
+-- >>> let cfg = AppConfig False (ProviderLogin "" "") Nothing [] at bt "http://provider.url.com"
 -- >>> runReaderT (evalRes (Right t)) cfg
 -- --------------------
 -- Balance:    10.0 €
@@ -75,7 +76,7 @@ run (Run ac) = do
 -- >>> let t = Tariff (Balance 10) (Usage 500 230 270) 21
 -- >>> let at = AvailableThreshold (Just 280) Nothing
 -- >>> let bt = BalanceThreshold Nothing Nothing
--- >>> let cfg = AppConfig False (ProviderLogin "" "") [] at bt "http://provider.url.com"
+-- >>> let cfg = AppConfig False (ProviderLogin "" "") Nothing [] at bt "http://provider.url.com"
 -- >>> runReaderT (evalRes (Right t)) cfg
 -- --------------------
 -- Balance:    10.0 €
@@ -91,6 +92,7 @@ run (Run ac) = do
 evalRes :: Either AppError Tariff -> ReaderT AppConfig IO ()
 -- handle successful result
 evalRes (Right tariff@(Tariff balance usage daysLeft)) = do
+     beQuiet <- asks acQuiet
 
      --
      -- build / print the report
@@ -109,7 +111,25 @@ evalRes (Right tariff@(Tariff balance usage daysLeft)) = do
 
 
      --
+     -- persist the values when a path is given
+     --
+     maybePersistPath <- asks acPersistPath
+     let persistAndLogResult path = do
+           res <- persist tariff path
+           case res of
+             (Right n) -> unless beQuiet . putStrLn $ "values persisted in file: " <> n
+             (Left e)  -> putStrLn $ "unable to persist values: " <> show e
+     liftIO $ mapM_ persistAndLogResult maybePersistPath
+
+
+
+
+
+     --
      -- publish the values
+     --
+     --  * when no usage is available, publish zeros
+     --    and terminate with exit code 2
      --
      case usage of
        UsageNotAvailable -> do
@@ -118,7 +138,6 @@ evalRes (Right tariff@(Tariff balance usage daysLeft)) = do
                   lift $ exitWith (ExitFailure 2)
 
        _                 -> publishTariff tariff
-
 
 
 

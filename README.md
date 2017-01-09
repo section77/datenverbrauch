@@ -30,6 +30,7 @@ and feed it per 'POST' request (values encoded in the URL) in a statistics webap
           -q,--quiet               be quiet
           -u,--user <USER>         provider login user
           -p,--pass <PASS>         provider login password
+          --persist <DIRECTORY>    directory path to persist values as csv
           --pub-quota <PUBLISH URL FOR QUOTA>
                                    endpoint for quota value
           --pub-used <PUBLISH URL FOR USED>

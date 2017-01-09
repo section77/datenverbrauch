@@ -5,6 +5,7 @@ import           BasicPrelude
 import           Control.Monad.Trans.Except
 import           Control.Monad.Trans.Reader
 
+
 type App a = ReaderT AppConfig (ExceptT AppError IO) a
 
 
@@ -26,6 +27,7 @@ type ProviderBaseUrl = String
 data AppConfig = AppConfig {
       acQuiet              :: Bool
     , acProviderLogin      :: ProviderLogin
+    , acPersistPath        :: Maybe FilePath
     , acPublishEndpoints   :: Endpoints
     , acAvailableThreshold :: AvailableThreshold
     , acBalanceThreshold   :: BalanceThreshold
