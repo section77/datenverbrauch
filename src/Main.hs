@@ -1,34 +1,28 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
-
 module Main where
 
-import           Args
-import           Control.Monad              (unless, when)
-import           Control.Monad.Trans.Class  (lift)
-import           Control.Monad.Trans.Except
-import           Control.Monad.Trans.Reader
+import           Control.Exception.Base (displayException)
+import qualified Data.Text              as T
 import           Data.Time
-import           Data.Version               (showVersion)
+import           Data.Version           (showVersion)
+import           Formatting
 import           Options.Applicative
-import           Paths_datenverbrauch       (version)
--- we use the standard prelude here and go with strings because
--- optparse-applicative and printf expects strings
-import           BasicPrelude               (liftIO)
+import           Paths_datenverbrauch   (version)
+import           Protolude              hiding ((%))
+import           Text.Printf
+
+import           Args
 import           Persist
-import           Prelude
 import           PublishTariff
 import           QueryTariff
-import           System.Exit                (ExitCode (..), exitWith)
-import           Text.Printf
 import           Types
-
-
 
 main :: IO ()
 main = execParser opts >>= run
   where opts = info (helper <*> appArgs)
                ( fullDesc
-               <> progDesc (unlines
+               <> progDesc (toS $ T.unlines
                             ["run it to show the current usage, use '--pub-xxx' switch to publish the values."
                             ,"use $ts$ for the current timestamp in ms epoch and $value$ for the current value in the url."
                             ])
@@ -56,19 +50,20 @@ run (Run ac) = do
 -- | eval the run result
 --
 -- >>> -- all fine
+-- >>> :set -XOverloadedStrings
 -- >>> let t = Tariff (Balance 10) (Usage 500 230 270) 21
 -- >>> let at = AvailableThreshold Nothing Nothing
 -- >>> let bt = BalanceThreshold Nothing Nothing
 -- >>> let cfg = AppConfig False (ProviderLogin "" "") Nothing [] at bt "http://provider.url.com"
 -- >>> runReaderT (evalRes (Right t)) cfg
 -- --------------------
--- Balance:    10.0 €
+-- Balance:    10.00 €
 -- --------------------
--- Quota:      500 MB
--- Used:       230 MB
--- Available:  270 MB
+-- Quota:       500 MB
+-- Used:        230 MB
+-- Available:   270 MB
 -- --------------------
--- Days left:      21
+-- Days left:       21
 -- --------------------
 --
 --
@@ -79,13 +74,13 @@ run (Run ac) = do
 -- >>> let cfg = AppConfig False (ProviderLogin "" "") Nothing [] at bt "http://provider.url.com"
 -- >>> runReaderT (evalRes (Right t)) cfg
 -- --------------------
--- Balance:    10.0 €
+-- Balance:    10.00 €
 -- --------------------
--- Quota:      500 MB
--- Used:       230 MB
--- Available:  270 MB
+-- Quota:       500 MB
+-- Used:        230 MB
+-- Available:   270 MB
 -- --------------------
--- Days left:      21
+-- Days left:       21
 -- --------------------
 -- available below warning threshold!
 -- *** Exception: ExitFailure 1
@@ -97,14 +92,14 @@ evalRes (Right tariff@(Tariff balance usage daysLeft)) = do
      --
      -- build / print the report
      --
-     let sep = replicate 20 '-'
+     let sep = T.replicate 20 "-"
      logger $ unlines' [
                   sep
                 , balanceReport balance
                 , sep
                 , usageReport usage
                 , sep
-                , printf "Days left: %7d" daysLeft
+                , sformat ("Days left: " % (left 8 ' ' %. int)) daysLeft
                 , sep
                 ]
 
@@ -117,8 +112,8 @@ evalRes (Right tariff@(Tariff balance usage daysLeft)) = do
      let persistAndLogResult path = do
            res <- persist tariff path
            case res of
-             (Right n) -> unless beQuiet . putStrLn $ "values persisted in file: " <> n
-             (Left e)  -> putStrLn $ "unable to persist values: " <> show e
+             (Right n) -> unless beQuiet . putText $ "values persisted in file: " <> T.pack n
+             (Left e)  -> putStrLn $ "unable to persist values: " <> displayException e
      liftIO $ mapM_ persistAndLogResult maybePersistPath
 
 
@@ -166,26 +161,25 @@ evalRes (Right tariff@(Tariff balance usage daysLeft)) = do
 
 -- handle errors
 evalRes (Left e) =
-  lift $ do putStrLn $ "ERROR: " ++ show e
+  lift $ do putText $ "ERROR: " <> show e
             exitWith $ ExitFailure 2
 
 
 
 -- | build the report for the balance
 --
-balanceReport :: Balance -> String
-balanceReport (Balance b) = printf "Balance: %7f €" b
+balanceReport :: Balance -> Text
+balanceReport (Balance b) = sformat ("Balance:" % (left 9 ' ' %. fixed 2) % " €") b
 balanceReport _           = "Balance not available\n"
 
 
 
 -- | build the report for the usage
 --
-usageReport :: Usage -> String
-usageReport (Usage q u a) =  unlines' [
-                              printf "Quota:     %4d MB" q
-                             ,printf "Used:      %4d MB" u
-                             ,printf "Available: %4d MB" a ]
+usageReport :: Usage -> Text
+usageReport (Usage q u a) = sformat ("Quota:     " % (left 5 ' ' %. int) % " MB" %
+                                   "\nUsed:      " % (left 5 ' ' %. int) % " MB" %
+                                   "\nAvailable: " % (left 5 ' ' %. int) % " MB" ) q u a
 usageReport _             = "Usage not available - quota exhausted?"
 
 
@@ -193,14 +187,14 @@ usageReport _             = "Usage not available - quota exhausted?"
 
 -- | log to stdout unless '--quite' flag was passed
 --
-logger :: String -> ReaderT AppConfig IO ()
-logger msg = do
+logger :: Text -> ReaderT AppConfig IO ()
+logger txt = do
   quiet <- asks acQuiet
-  unless quiet $ lift . putStrLn $ msg
+  unless quiet . lift . putText $ txt
 
 
 
 -- | like unlines from the prelude, but without the last newline
 --
-unlines' :: [String] -> String
-unlines' = init . unlines
+unlines' :: [Text] -> Text
+unlines' = T.init . T.unlines

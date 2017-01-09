@@ -2,14 +2,15 @@
 module Persist where
 
 
-import           BasicPrelude
 import qualified Data.Text.Lazy.IO          as TL
 import           Data.Time
 import           Formatting
 import           Formatting.ShortFormatters (d, f, t)
 import           Formatting.Time            (datetime)
+import           Protolude                  hiding ((%))
 import           System.Directory           (createDirectoryIfMissing,
                                              doesFileExist)
+import           System.FilePath            ((</>))
 import           Types
 
 

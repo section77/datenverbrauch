@@ -1,20 +1,21 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 module Types where
 
-import           BasicPrelude
-import           Control.Monad.Trans.Except
-import           Control.Monad.Trans.Reader
+import           Protolude
 
 
 type App a = ReaderT AppConfig (ExceptT AppError IO) a
 
 
 data AppError = LoginError Text
-              | BalanceNotFound
+              | TagNotFound Text
+              | TagHasNoText Text
+              | UsageNotParsable Text
+              | BalanceNotParsable Text
               | UsageNotExtractable
               | EndDateNotFound
-              | EndDateNotParsable String
-              | PublisherError String
+              | EndDateNotParsable Text
+              | PublisherError Text
               deriving Show
 
 
@@ -22,7 +23,7 @@ data AppArgs = ShowVersion
              | Run AppConfig
                deriving Show
 
-type ProviderBaseUrl = String
+type ProviderBaseUrl = Text
 
 data AppConfig = AppConfig {
       acQuiet              :: Bool
@@ -36,17 +37,17 @@ data AppConfig = AppConfig {
 
 
 data ProviderLogin = ProviderLogin {
-      plUser :: String
-    , plPass :: String
+      plUser :: Text
+    , plPass :: Text
     } deriving Show
 
 
 type Endpoints = [Endpoint]
-data Endpoint = EndpointQuota String
-              | EndpointUsed String
-              | EndpointAvailable String
-              | EndpointBalance String
-              | EndpointDaysLeft String
+data Endpoint = EndpointQuota Text
+              | EndpointUsed Text
+              | EndpointAvailable Text
+              | EndpointBalance Text
+              | EndpointDaysLeft Text
                 deriving Show
 
 

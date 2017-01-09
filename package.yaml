@@ -8,24 +8,26 @@ author: j-keck <jhyphenkeck@gmail.com>
 ghc-options: -Wall -optl-static -optl-pthread
 default-extensions: NoImplicitPrelude
 
+    
 executables:
   datenverbrauch:
     main: Main.hs
     source-dirs: src
     dependencies:
       - base >= 4.7 && < 5
-      - basic-prelude
       - bytestring
       - directory
+      - filepath
       - formatting
+      - HStringTemplate
       - lens
       - optparse-applicative
+      - protolude
       - tagsoup
       - text
       - time
       - transformers
-      - wreq
-      - HStringTemplate
+      - wreq-stringless
 
 tests:
   doctest:
@@ -33,4 +35,4 @@ tests:
     source-dirs: test
     dependencies:
       - doctest
-      - basic-prelude
+      - protolude

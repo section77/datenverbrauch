@@ -1,6 +1,6 @@
 module Main where
 
-import           BasicPrelude
+import           Protolude
 import           Test.DocTest
 
 main :: IO ()

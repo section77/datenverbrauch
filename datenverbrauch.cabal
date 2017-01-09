@@ -25,18 +25,19 @@ executable datenverbrauch
   ghc-options: -Wall -optl-static -optl-pthread
   build-depends:
       base >= 4.7 && < 5
-    , basic-prelude
     , bytestring
     , directory
+    , filepath
     , formatting
+    , HStringTemplate
     , lens
     , optparse-applicative
+    , protolude
     , tagsoup
     , text
     , time
     , transformers
-    , wreq
-    , HStringTemplate
+    , wreq-stringless
   other-modules:
       Args
       Persist
@@ -54,5 +55,5 @@ test-suite doctest
   ghc-options: -Wall -optl-static -optl-pthread
   build-depends:
       doctest
-    , basic-prelude
+    , protolude
   default-language: Haskell2010
