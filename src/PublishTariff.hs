@@ -26,7 +26,7 @@ publish :: Text -> Tariff -> Bool -> Endpoint -> IO ()
 publish ts t quiet e = do
   maybe (pure ()) (post . enrich) $ resolve t e
   where enrich :: (Text, Text) -> Text
-        enrich (toS -> url, value) = ST.render $ ST.setManyAttrib [("ts", ts), ("value", show value)] $ ST.newSTMP url
+        enrich (toS -> url, value) = ST.render $ ST.setManyAttrib [("ts", ts), ("value", value)] $ ST.newSTMP url
         post url = do
           unless quiet $ putStr $ "Publish to: " <> url
           res <- try $ W.post url BSL.empty :: IO (Either SomeException (W.Response LByteString))
