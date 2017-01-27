@@ -1,5 +1,5 @@
 name: datenverbrauch
-version: 0.2.6
+version: 0.2.7-SNAPSHOT
 description: query data usage from alditalk-kundenbetreuung.de
 github: section77/datenverbrauch
 license: MIT
