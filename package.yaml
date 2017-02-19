@@ -1,5 +1,5 @@
 name: datenverbrauch
-version: 0.2.7-SNAPSHOT
+version: 0.2.7
 description: query data usage from alditalk-kundenbetreuung.de
 github: section77/datenverbrauch
 license: MIT
@@ -8,7 +8,7 @@ author: j-keck <jhyphenkeck@gmail.com>
 ghc-options: -Wall -optl-static -optl-pthread
 default-extensions: NoImplicitPrelude
 
-    
+
 executables:
   datenverbrauch:
     main: Main.hs
