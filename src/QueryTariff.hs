@@ -69,14 +69,17 @@ extractBalance tags = firstTagTextBy "Balance" locator tags >>= extract
 --   </tr>
 --
 extractUsage :: [Tag LByteString] -> Either AppError Usage
-extractUsage tags = firstTagTextBy "Usage" locator tags >>= extract
-    where locator = drop 4 . dropWhile (~/== "Datenverbrauch")
+extractUsage tags = extract $ locator tags
+    where locator = fmap (toS . fromTagText) . filter isTagText . take 9 . drop 15 . dropWhile (~/== "Internet-Flatrate XL")
 
-          -- TODO: use regex to parse:
-          -- "\n                                        Noch 5046 von 5120 MB verf\195\188gbar\n                                    "
-          extract x = case (T.words . show) x of
-                        [_, _, available, _, quota, _, _, _] -> buildUsage quota available
-                        _                                    -> Left UsageNotExtractable
+          -- this is our input:
+          --
+          --   ["\n                                        Noch 2761 verf\195\188gbar\n                                    "
+          --   ,"\n                                \n                                \n                                                    \n                                                    "
+          --   ,"\n                                \n                                                                    "
+          --   ,"von 5120 MB"]
+          extract [T.words -> (_:a:_), _, _, T.words -> (_:q:_)] = buildUsage q a
+          extract _                                              = Left UsageNotExtractable
 
           buildUsage q a = let errOrQuota     = decimal' q
                                errOrAvailable = decimal' a
@@ -164,7 +167,7 @@ login baseUrl pl = WS.withSession $ \sess -> do
 
 
 
--- | (~==) Wrapper to fix the selector Type to [Char].
+-- | (~/==) Wrapper to fix the selector Type to [Char].
 --
 -- TagSoup has two Type Classes for the selector: [Char] and (TagRep (Tag str)).
 -- With the use of 'OverloadedText', we get ambiguous Type Classes for the selector.
