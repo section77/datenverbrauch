@@ -18,6 +18,7 @@ import qualified Network.Wreq.StringLess.Session as WS
 import           Network.Wreq.StringLess.Types   (Postable)
 import           Protolude
 import           Text.HTML.TagSoup
+import           Text.HTML.TagSoup.Match         hiding (tagText)
 import           Text.StringLike
 
 import           Types
@@ -61,25 +62,24 @@ extractBalance tags = firstTagTextBy "Balance" locator tags >>= extract
 
 -- | extract the usage
 --
---   <tr>
---     <td>Datenverbrauch</td>
---     <td>
---          Noch 5046 von 5120 MB verfügbar
---     </td>
---   </tr>
+--   <p><strong>Internet-Flatrate XL</strong></p>
+--   Daten<br>
+--   <div class="display-mode-remaining progress-bar progress-bar--big">
+--     <div class="progress" style="width:38.4375%;"></div>
+--   </div>
+--   <p class="small">
+--   Noch 1968 von 5120 MB verfügbar
+--   </p>
 --
 extractUsage :: [Tag LByteString] -> Either AppError Usage
-extractUsage tags = extract $ locator tags
-    where locator = fmap (toS . fromTagText) . filter isTagText . take 9 . drop 15 . dropWhile (~/== "Internet-Flatrate XL")
+extractUsage tags = maybeToRight UsageNotExtractable (locator tags) >>= extract
+    where locator = fmap fromTagText . headMay . drop 8 . dropWhile (not . tagOpen ( == "div") (anyAttrValue (T.isInfixOf "display-mode-remaining" . toS)))
 
           -- this is our input:
           --
-          --   ["\n                                        Noch 2761 verf\195\188gbar\n                                    "
-          --   ,"\n                                \n                                \n                                                    \n                                                    "
-          --   ,"\n                                \n                                                                    "
-          --   ,"von 5120 MB"]
-          extract [T.words -> (_:a:_), _, _, T.words -> (_:q:_)] = buildUsage q a
-          extract _                                              = Left UsageNotExtractable
+          --   "\n                                        Noch 1968 von 5120 MB verf\195\188gbar\n                                    "
+          extract ((T.words . T.strip . toS) -> _ : a : _ : q : _) = buildUsage q a
+          extract _                                                = Left UsageNotExtractable
 
           buildUsage q a = let errOrQuota     = decimal' q
                                errOrAvailable = decimal' a
