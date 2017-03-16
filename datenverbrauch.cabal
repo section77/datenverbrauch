@@ -3,7 +3,7 @@
 -- see: https://github.com/sol/hpack
 
 name:                datenverbrauch
-version:             0.2.8-SNAPSHOT
+version:             0.2.8
 description:         query data usage from alditalk-kundenbetreuung.de
 homepage:            https://github.com/section77/datenverbrauch#readme
 bug-reports:         https://github.com/section77/datenverbrauch/issues
